@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHOSTFI - Crypto Trading Simulator on Solana</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
+    <style>
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+            100% { transform: translateY(0px); }
+        }
+        @keyframes glow {
+            0% { text-shadow: 0 0 5px #75FA03; }
+            50% { text-shadow: 0 0 20px #75FA03; }
+            100% { text-shadow: 0 0 5px #75FA03; }
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        .ghost-float {
+            animation: float 6s ease-in-out infinite;
+        }
+        .text-glow {
+            animation: glow 3s ease-in-out infinite;
+        }
+        .fade-in {
+            animation: fadeIn 1.5s ease-in;
+        }
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #000000;
+            color: #EBFDDE;
+            scroll-behavior: smooth;
+        }
+        h1, h2, h3 {
+            font-family: 'Orbitron', sans-serif;
+        }
+        .bg-ghost {
+            background-color: #101010;
+        }
+        .border-glow {
+            border: 1px solid #75FA03;
+            box-shadow: 0 0 15px #75FA03;
+        }
+        .particle {
+            position: absolute;
+            background-color: rgba(117, 250, 3, 0.3);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+        .gradient-text {
+            background: linear-gradient(90deg, #EBFDDE, #75FA03);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -30px;
+            top: 15px;
+            width: 20px;
+            height: 20px;
+            background-color: #75FA03;
+            border-radius: 50%;
+            z-index: 1;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background-color: #75FA03;
+        }
+        .section {
+            scroll-margin-top: 80px;
+        }
+    </style>
+</head>
+<body class="relative overflow-x-hidden">
+    <!-- Floating Particles Background -->
+    <div id="particles-js" class="fixed inset-0 -z-10"></div>
+    
+    <!-- Sticky Header -->
+    <header class="fixed top-0 left-0 right-0 bg-black bg-opacity-90 backdrop-blur-md z-50 border-b border-gray-800">
+        <div class="container mx-auto px-4 py-3 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+                <img src="https://i.ibb.co/9kzQVpL5/Picsart-25-05-20-14-49-59-790.png" alt="GhostFi Logo" class="h-8">
+                <img src="https://i.ibb.co/G45gJPFK/Picsart-25-05-20-16-00-59-708.png" alt="GhostFi Text" class="h-6">
+            </div>
+            <nav class="hidden md:flex space-x-8">
+                <a href="#about" class="text-gray-300 hover:text-white transition">About</a>
+                <a href="#utility" class="text-gray-300 hover:text-white transition">Utility</a>
+                <a href="#tokenomics" class="text-gray-300 hover:text-white transition">Tokenomics</a>
+                <a href="#roadmap" class="text-gray-300 hover:text-white transition">Roadmap</a>
+                <a href="#community" class="text-gray-300 hover:text-white transition">Community</a>
+            </nav>
+            <div class="flex space-x-4">
+                <a href="#" class="bg-[#75FA03] hover:bg-[#EBFDDE] text-black px-4 py-2 rounded-full font-bold text-sm transition flex items-center">
+                    <i class="fab fa-telegram mr-2"></i> Launch Bot
+                </a>
+                <button class="md:hidden text-white" id="menu-toggle">
+                    <i class="fas fa-bars text-xl"></i>
+                </button>
+            </div>
+        </div>
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="hidden md:hidden bg-black bg-opacity-95 absolute top-full left-0 right-0 py-4 px-4 border-t border-gray-800">
+            <div class="flex flex-col space-y-4">
+                <a href="#about" class="text-gray-300 hover:text-white transition">About</a>
+                <a href="#utility" class="text-gray-300 hover:text-white transition">Utility</a>
+                <a href="#tokenomics" class="text-gray-300 hover:text-white transition">Tokenomics</a>
+                <a href="#roadmap" class="text-gray-300 hover:text-white transition">Roadmap</a>
+                <a href="#community" class="text-gray-300 hover:text-white transition">Community</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section id="hero" class="min-h-screen flex items-center justify-center relative overflow-hidden pt-20 section">
+        <div class="container mx-auto px-4 py-20 flex flex-col items-center text-center">
+            <div class="relative mb-8 ghost-float">
+                <img src="https://i.ibb.co/9kzQVpL5/Picsart-25-05-20-14-49-59-790.png" alt="GhostFi Icon" class="h-32 mx-auto">
+                <div class="absolute inset-0 rounded-full bg-[#75FA03] opacity-20 blur-2xl -z-10"></div>
+            </div>
+            <h1 class="text-4xl md:text-6xl font-bold mb-6 text-glow">
+                <span class="gradient-text">Trade Smarter. Train Safer.</span>
+                <br>Dominate the Memecoin Market.
+            </h1>
+            <p class="text-xl md:text-2xl text-gray-300 mb-12 max-w-3xl mx-auto">
+                Experience next-gen simulated crypto trading through Telegram. Powered by GHOSTFI on the Solana blockchain.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <a href="#" class="bg-[#75FA03] hover:bg-[#EBFDDE] text-black px-8 py-4 rounded-full font-bold text-lg transition flex items-center justify-center">
+                    <i class="fas fa-rocket mr-2"></i> Launch Bot
+                </a>
+                <a href="#" class="border-2 border-[#75FA03] hover:bg-[#75FA03] hover:text-black text-[#75FA03] px-8 py-4 rounded-full font-bold text-lg transition flex items-center justify-center">
+                    <i class="fas fa-comment-dots mr-2"></i> Join Our Telegram
+                </a>
+            </div>
+            <div class="mt-16 w-full max-w-2xl bg-[#101010] rounded-xl p-4 border-glow">
+                <div class="relative h-64 bg-black rounded-lg overflow-hidden">
+                    <!-- Placeholder for bot animation -->
+                    <div class="absolute inset-0 flex items-center justify-center">
+                        <div class="text-center">
+                            <i class="fas fa-robot text-6xl text-[#75FA03] mb-4"></i>
+                            <p class="text-[#75FA03]">Telegram Bot Interface</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 bg-ghost section">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center gap-12">
+                <div class="md:w-1/2 relative">
+                    <div class="ghost-float">
+                        <img src="https://i.ibb.co/9kzQVpL5/Picsart-25-05-20-14-49-59-790.png" alt="GhostFi Icon" class="h-64 mx-auto">
+                        <div class="absolute inset-0 rounded-full bg-[#75FA03] opacity-20 blur-2xl -z-10"></div>
+                    </div>
+                </div>
+                <div class="md:w-1/2">
+                    <h2 class="text-3xl md:text-4xl font-bold mb-6 text-[#75FA03]">What is GHOSTFI?</h2>
+                    <p class="text-lg md:text-xl mb-8">
+                        GHOSTFI is a groundbreaking training platform built on Solana, offering a Telegram-based crypto simulator where you can trade real tokens using virtual currencies like ETH and SOL. It's the ideal training ground for those who want to sharpen their instincts, test high-risk strategies, or simply compete without fear of loss.
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-[#75FA03] rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-shield-alt text-black"></i>
+                                </div>
+                                <h3 class="font-bold">100% Risk-Free</h3>
+                            </div>
+                            <p class="text-sm text-gray-300">Practice with virtual funds in real market conditions.</p>
+                        </div>
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-[#75FA03] rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-coins text-black"></i>
+                                </div>
+                                <h3 class="font-bold">Meme Coin Focus</h3>
+                            </div>
+                            <p class="text-sm text-gray-300">Built specifically for meme coin enthusiasts.</p>
+                        </div>
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-[#75FA03] rounded-full flex items-center justify-center mr-3">
+                                    <i class="fas fa-bolt text-black"></i>
+                                </div>
+                                <h3 class="font-bold">Lightning Fast</h3>
+                            </div>
+                            <p class="text-sm text-gray-300">Real-time Solana market feeds with no delays.</p>
+                        </div>
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                            <div class="flex items-center mb-2">
+                                <div class="w-8 h-8 bg-[#75FA03] rounded-full flex items-center justify-center mr-3">
+                                    <i class="fab fa-telegram text-black"></i>
+                                </div>
+                                <h3 class="font-bold">Telegram Native</h3>
+                            </div>
+                            <p class="text-sm text-gray-300">Seamless UX right in your favorite messaging app.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Utility Section -->
+    <section id="utility" class="py-20 section">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-[#75FA03]">A Bot That Trains You Like a Trader</h2>
+                <p class="text-xl max-w-3xl mx-auto">
+                    GhostFi is not just a paper trading bot — it's a real-time crypto sandbox where you can simulate trades across trending tokens.
+                </p>
+            </div>
+            
+            <div class="flex flex-col lg:flex-row gap-12 items-center mb-16">
+                <div class="lg:w-1/2 bg-[#101010] rounded-xl p-2 border-glow">
+                    <div class="bg-black rounded-lg overflow-hidden h-96">
+                        <!-- Telegram UI Mockup -->
+                        <div class="h-full flex flex-col">
+                            <div class="bg-[#0088cc] p-3 text-white flex items-center">
+                                <i class="fab fa-telegram mr-2"></i>
+                                <span>GhostFi Bot</span>
+                            </div>
+                            <div class="flex-1 bg-[#e6ebee] p-4 text-black">
+                                <div class="mb-4">
+                                    <div class="bg-white rounded-lg p-3 max-w-xs mb-2">
+                                        <p>/buy $PEPE 0.25 ETH</p>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-3 max-w-xs mb-2">
+                                        <p>/sell $BONK 75%</p>
+                                    </div>
+                                    <div class="bg-white rounded-lg p-3 max-w-xs">
+                                        <p>/stats</p>
+                                    </div>
+                                </div>
+                                <div class="bg-[#75FA03] rounded-lg p-3 max-w-xs ml-auto">
+                                    <p>✅ Success! Bought 1,250,000 $PEPE for 0.25 ETH</p>
+                                    <p class="text-sm">Current value: 0.28 ETH (+12%)</p>
+                                </div>
+                            </div>
+                            <div class="bg-white p-3 border-t border-gray-300">
+                                <div class="flex items-center">
+                                    <input type="text" placeholder="Type a message..." class="flex-1 bg-gray-100 rounded-full px-4 py-2">
+                                    <button class="ml-2 text-[#0088cc]">
+                                        <i class="fas fa-paper-plane"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:w-1/2">
+                    <h3 class="text-2xl font-bold mb-6 text-[#75FA03]">Core Features</h3>
+                    <div class="space-y-6">
+                        <div class="flex items-start">
+                            <div class="bg-[#75FA03] text-black rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fas fa-chart-line"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1">Real-Time Solana Prices</h4>
+                                <p class="text-gray-300">Get live price feeds for all major Solana tokens with zero delay.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-[#75FA03] text-black rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fas fa-wallet"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1">Virtual ETH & SOL Wallets</h4>
+                                <p class="text-gray-300">Start with virtual funds to practice trading without risk.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-[#75FA03] text-black rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fas fa-terminal"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1">Simple Commands</h4>
+                                <p class="text-gray-300">Fast /buy and /sell commands with percentage-based orders.</p>
+                            </div>
+                        </div>
+                        <div class="flex items-start">
+                            <div class="bg-[#75FA03] text-black rounded-full w-10 h-10 flex items-center justify-center flex-shrink-0 mr-4">
+                                <i class="fas fa-chart-pie"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-lg mb-1">Performance Tracking</h4>
+                                <p class="text-gray-300">Analyze your win rate, PnL, and trading behavior with /stats.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-[#101010] rounded-xl p-6 border-glow max-w-4xl mx-auto">
+                <h3 class="text-xl font-bold mb-4 text-[#75FA03]">Example Commands</h3>
+                <div class="bg-black rounded-lg p-4 overflow-x-auto">
+                    <code class="text-[#75FA03] font-mono block">
+                        <span class="text-gray-400"># Buy tokens with virtual ETH</span><br>
+                        /buy $PEPE 0.25 ETH<br><br>
+                        
+                        <span class="text-gray-400"># Sell a percentage of your holdings</span><br>
+                        /sell $BONK 75%<br><br>
+                        
+                        <span class="text-gray-400"># Check your portfolio stats</span><br>
+                        /stats<br><br>
+                        
+                        <span class="text-gray-400"># Coming soon: Leaderboard competition</span><br>
+                        /leaderboard
+                    </code>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Why & How Section -->
+    <section id="why" class="py-20 bg-ghost section">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-[#75FA03]">Why Use GhostFi?</h2>
+                <p class="text-xl max-w-3xl mx-auto">
+                    Most traders lose money before they even understand the game. GhostFi is your opportunity to learn with zero downside.
+                </p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto relative">
+                <div class="timeline space-y-8 pl-8 relative">
+                    <div class="timeline-item relative pl-4">
+                        <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                            <h3 class="text-xl font-bold mb-2 text-[#75FA03]">1. Join the Bot</h3>
+                            <p>Click to enter our Telegram bot and receive your virtual wallets with starting balances of 10 ETH and 100 SOL for practice.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item relative pl-4">
+                        <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                            <h3 class="text-xl font-bold mb-2 text-[#75FA03]">2. Simulate Trades</h3>
+                            <p>Use simple commands to practice with real market data. Buy PEPE with virtual ETH, sell BONK for virtual SOL - all with real price feeds.</p>
+                        </div>
+                    </div>
+                    <div class="timeline-item relative pl-4">
+                        <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                            <h3 class="text-xl font-bold mb-2 text-[#75FA03]">3. Track Your Growth</h3>
+                            <p>Analyze win rate, PnL, and trading behavior over time. Identify your strengths and weaknesses as a trader.</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-16 text-center">
+                    <div class="inline-block bg-[#101010] px-6 py-3 rounded-full border border-[#75FA03]">
+                        <p class="text-[#75FA03] font-bold">
+                            <i class="fas fa-crown mr-2"></i> Leaderboard integration for competitive traders coming soon!
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Who It's For Section -->
+    <section id="who" class="py-20 section">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-[#75FA03]">Who Benefits from GhostFi?</h2>
+                <p class="text-xl max-w-3xl mx-auto">
+                    Whether you're a complete beginner or an experienced trader, GhostFi has something to offer.
+                </p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition group">
+                    <div class="w-16 h-16 bg-[#75FA03] rounded-full flex items-center justify-center mb-4 text-2xl text-black group-hover:scale-110 transition">
+                        <i class="fas fa-baby"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Beginners</h3>
+                    <p class="text-gray-300">Learn crypto risk-free before using real capital. Understand market mechanics without the stress.</p>
+                </div>
+                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition group">
+                    <div class="w-16 h-16 bg-[#75FA03] rounded-full flex items-center justify-center mb-4 text-2xl text-black group-hover:scale-110 transition">
+                        <i class="fas fa-brain"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Advanced Traders</h3>
+                    <p class="text-gray-300">Backtest ideas and fine-tune strategies. Experiment with high-risk plays safely.</p>
+                </div>
+                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition group">
+                    <div class="w-16 h-16 bg-[#75FA03] rounded-full flex items-center justify-center mb-4 text-2xl text-black group-hover:scale-110 transition">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Competitors</h3>
+                    <p class="text-gray-300">Battle friends and rise on the leaderboards. Prove your trading skills against others.</p>
+                </div>
+                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition group">
+                    <div class="w-16 h-16 bg-[#75FA03] rounded-full flex items-center justify-center mb-4 text-2xl text-black group-hover:scale-110 transition">
+                        <i class="fas fa-chalkboard-teacher"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Educators</h3>
+                    <p class="text-gray-300">Perfect simulation tool for teaching students. Demonstrate concepts with live examples.</p>
+                </div>
+                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition group">
+                    <div class="w-16 h-16 bg-[#75FA03] rounded-full flex items-center justify-center mb-4 text-2xl text-black group-hover:scale-110 transition">
+                        <i class="fas fa-head-side-virus"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Psychology Trainers</h3>
+                    <p class="text-gray-300">Improve decision-making under pressure. Learn emotional control in volatile markets.</p>
+                </div>
+                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition group">
+                    <div class="w-16 h-16 bg-[#75FA03] rounded-full flex items-center justify-center mb-4 text-2xl text-black group-hover:scale-110 transition">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Influencers</h3>
+                    <p class="text-gray-300">Create community challenges and rewards. Engage your audience with trading competitions.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tokenomics Section -->
+    <section id="tokenomics" class="py-20 bg-ghost section">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-[#75FA03]">$GHOSTFI: The Fuel of the Phantom</h2>
+                <p class="text-xl max-w-3xl mx-auto">
+                    The token that powers the GhostFi ecosystem and rewards holders.
+                </p>
+            </div>
+            
+            <div class="max-w-2xl mx-auto bg-[#101010] rounded-xl p-8 border-glow relative overflow-hidden">
+                <div class="absolute -right-20 -top-20 w-64 h-64 bg-[#75FA03] rounded-full opacity-10 blur-3xl"></div>
+                <div class="relative z-10">
+                    <div class="flex items-center justify-center mb-8">
+                        <img src="https://i.ibb.co/9kzQVpL5/Picsart-25-05-20-14-49-59-790.png" alt="GhostFi Token" class="h-20 mr-4">
+                        <div>
+                            <h3 class="text-2xl font-bold">GhostFi Token</h3>
+                            <p class="text-[#75FA03] font-mono">$GHOSTFI</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center pb-2 border-b border-gray-800">
+                            <span>Total Supply</span>
+                            <span class="font-bold">1,000,000,000</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-2 border-b border-gray-800">
+                            <span>Transaction Tax</span>
+                            <span class="font-bold">10% on buys/sells</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-2 border-b border-gray-800">
+                            <span>Holder Rewards</span>
+                            <span class="font-bold">80% of taxes redistributed as $SOL</span>
+                        </div>
+                        <div class="flex justify-between items-center pb-2 border-b border-gray-800">
+                            <span>Liquidity</span>
+                            <span class="font-bold">Locked</span>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span>Launch Platform</span>
+                            <span class="font-bold">RevShare</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 bg-black bg-opacity-50 rounded-lg p-4">
+                        <h4 class="font-bold mb-2 text-[#75FA03]">Token Utility</h4>
+                        <ul class="list-disc pl-5 space-y-2">
+                            <li>Access to premium bot features</li>
+                            <li>Earn SOL from transaction taxes</li>
+                            <li>Governance rights for future development</li>
+                            <li>Staking rewards coming soon</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Roadmap Section -->
+    <section id="roadmap" class="py-20 section">
+        <div class="container mx-auto px-4">
+            <div class="text-center mb-16">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4 text-[#75FA03]">The GhostFi Journey</h2>
+                <p class="text-xl max-w-3xl mx-auto">
+                    Our strategic plan to build the ultimate crypto training platform.
+                </p>
+            </div>
+            
+            <div class="max-w-4xl mx-auto">
+                <div class="relative">
+                    <!-- Vertical Timeline Line -->
+                    <div class="absolute left-1/2 h-full w-1 bg-[#75FA03] transform -translate-x-1/2"></div>
+                    
+                    <!-- Roadmap Items -->
+                    <div class="space-y-16">
+                        <!-- Q2 2025 -->
+                        <div class="relative flex items-center">
+                            <div class="hidden md:block md:w-1/2"></div>
+                            <div class="z-10 w-8 h-8 bg-[#75FA03] rounded-full flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+                                <i class="fas fa-rocket text-black"></i>
+                            </div>
+                            <div class="w-full md:w-1/2 pl-10 md:pl-0 md:pr-10">
+                                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                                    <div class="flex items-center mb-2">
+                                        <span class="bg-[#75FA03] text-black px-3 py-1 rounded-full text-sm font-bold mr-3">Q2 2025</span>
+                                        <h3 class="text-xl font-bold">Genesis</h3>
+                                    </div>
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li>Launch GhostFi Telegram Bot (v1)</li>
+                                        <li>Integrate real-time Solana token prices</li>
+                                        <li>Deploy $GHOSTFI token on RevShare platform</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Q3 2025 -->
+                        <div class="relative flex items-center">
+                            <div class="w-full md:w-1/2 pr-10">
+                                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                                    <div class="flex items-center mb-2">
+                                        <span class="bg-[#75FA03] text-black px-3 py-1 rounded-full text-sm font-bold mr-3">Q3 2025</span>
+                                        <h3 class="text-xl font-bold">Community Building</h3>
+                                    </div>
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li>Leaderboard & ghost trophies</li>
+                                        <li>Airdrops for early testers</li>
+                                        <li>Onboarding content for influencers/educators</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="z-10 w-8 h-8 bg-[#75FA03] rounded-full flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+                                <i class="fas fa-users text-black"></i>
+                            </div>
+                            <div class="hidden md:block md:w-1/2"></div>
+                        </div>
+                        
+                        <!-- Q4 2025 -->
+                        <div class="relative flex items-center">
+                            <div class="hidden md:block md:w-1/2"></div>
+                            <div class="z-10 w-8 h-8 bg-[#75FA03] rounded-full flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+                                <i class="fas fa-tachometer-alt text-black"></i>
+                            </div>
+                            <div class="w-full md:w-1/2 pl-10 md:pl-0 md:pr-10">
+                                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                                    <div class="flex items-center mb-2">
+                                        <span class="bg-[#75FA03] text-black px-3 py-1 rounded-full text-sm font-bold mr-3">Q4 2025</span>
+                                        <h3 class="text-xl font-bold">Performance Mode</h3>
+                                    </div>
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li>Advanced stats dashboard (/performance)</li>
+                                        <li>Daily/weekly competitions</li>
+                                        <li>SOL payout automation for top users</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Q1 2026 -->
+                        <div class="relative flex items-center">
+                            <div class="w-full md:w-1/2 pr-10">
+                                <div class="bg-[#101010] p-6 rounded-lg border border-gray-800 hover:border-[#75FA03] transition">
+                                    <div class="flex items-center mb-2">
+                                        <span class="bg-[#75FA03] text-black px-3 py-1 rounded-full text-sm font-bold mr-3">Q1 2026</span>
+                                        <h3 class="text-xl font-bold">GhostFi Pro</h3>
+                                    </div>
+                                    <ul class="list-disc pl-5 space-y-1">
+                                        <li>Premium tiers with advanced tools</li>
+                                        <li>Integration with tradingview signals</li>
+                                        <li>DAO voting mechanism for utility upgrades</li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="z-10 w-8 h-8 bg-[#75FA03] rounded-full flex items-center justify-center absolute left-1/2 transform -translate-x-1/2">
+                                <i class="fas fa-star text-black"></i>
+                            </div>
+                            <div class="hidden md:block md:w-1/2"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Community Section -->
+    <section id="community" class="py-20 bg-ghost section">
+        <div class="container mx-auto px-4">
+            <div class="max-w-4xl mx-auto text-center">
+                <h2 class="text-3xl md:text-4xl font-bold mb-6 text-[#75FA03]">Ready to Haunt the Markets?</h2>
+                <p class="text-xl mb-10 max-w-2xl mx-auto">
+                    Join our growing community of phantom traders and start your risk-free crypto journey today.
+                </p>
+                
+                <div class="flex flex-col sm:flex-row justify-center gap-4 mb-16">
+                    <a href="#" class="bg-[#75FA03] hover:bg-[#EBFDDE] text-black px-8 py-4 rounded-full font-bold text-lg transition flex items-center justify-center">
+                        <i class="fab fa-telegram mr-2"></i> Join Telegram
+                    </a>
+                    <a href="#" class="border-2 border-[#75FA03] hover:bg-[#75FA03] hover:text-black text-[#75FA03] px-8 py-4 rounded-full font-bold text-lg transition flex items-center justify-center">
+                        <i class="fab fa-twitter mr-2"></i> Follow Twitter
+                    </a>
+                    <a href="#" class="border-2 border-[#75FA03] hover:bg-[#75FA03] hover:text-black text-[#75FA03] px-8 py-4 rounded-full font-bold text-lg transition flex items-center justify-center">
+                        <i class="fas fa-robot mr-2"></i> Launch the Bot
+                    </a>
+                </div>
+                
+                <div class="bg-[#101010] rounded-xl p-6 border-glow">
+                    <h3 class="text-xl font-bold mb-4 text-[#75FA03]">Community Stats</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg">
+                            <div class="text-3xl font-bold text-[#75FA03] mb-1">100+</div>
+                            <div class="text-sm text-gray-300">Telegram Members</div>
+                        </div>
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg">
+                            <div class="text-3xl font-bold text-[#75FA03] mb-1">10,000+</div>
+                            <div class="text-sm text-gray-300">Simulated Trades</div>
+                        </div>
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg">
+                            <div class="text-3xl font-bold text-[#75FA03] mb-1">100+</div>
+                            <div class="text-sm text-gray-300">Tokens Tracked</div>
+                        </div>
+                        <div class="bg-black bg-opacity-50 p-4 rounded-lg">
+                            <div class="text-3xl font-bold text-[#75FA03] mb-1">24/7</div>
+                            <div class="text-sm text-gray-300">Market Coverage</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-black py-12 border-t border-gray-800">
+        <div class="container mx-auto px-4">
+            <div class="flex flex-col md:flex-row justify-between">
+                <div class="mb-8 md:mb-0">
+                    <div class="flex items-center mb-4">
+                        <img src="https://i.ibb.co/9kzQVpL5/Picsart-25-05-20-14-49-59-790.png" alt="GhostFi Logo" class="h-8 mr-2">
+                        <img src="https://i.ibb.co/G45gJPFK/Picsart-25-05-20-16-00-59-708.png" alt="GhostFi Text" class="h-6">
+                    </div>
+                    <p class="text-gray-400 max-w-xs">Train Hard. Trade Smart. GhostFi on Solana.</p>
+                </div>
+                
+                <div class="grid grid-cols-2 md:grid-cols-3 gap-8 mb-8 md:mb-0">
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 text-[#75FA03]">Navigation</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#about" class="text-gray-400 hover:text-white transition">About</a></li>
+                            <li><a href="#utility" class="text-gray-400 hover:text-white transition">Utility</a></li>
+                            <li><a href="#tokenomics" class="text-gray-400 hover:text-white transition">Tokenomics</a></li>
+                            <li><a href="#roadmap" class="text-gray-400 hover:text-white transition">Roadmap</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 text-[#75FA03]">Resources</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Whitepaper</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Tutorials</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">FAQ</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold mb-4 text-[#75FA03]">Legal</h3>
+                        <ul class="space-y-2">
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Terms</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Privacy</a></li>
+                            <li><a href="#" class="text-gray-400 hover:text-white transition">Disclaimer</a></li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 class="text-lg font-bold mb-4 text-[#75FA03]">Connect With Us</h3>
+                    <div class="flex space-x-4">
+                        <a href="#" class="w-10 h-10 bg-[#101010] rounded-full flex items-center justify-center text-gray-400 hover:text-[#75FA03] transition">
+                            <i class="fab fa-telegram text-xl"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-[#101010] rounded-full flex items-center justify-center text-gray-400 hover:text-[#75FA03] transition">
+                            <i class="fab fa-twitter text-xl"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-[#101010] rounded-full flex items-center justify-center text-gray-400 hover:text-[#75FA03] transition">
+                            <i class="fab fa-discord text-xl"></i>
+                        </a>
+                        <a href="#" class="w-10 h-10 bg-[#101010] rounded-full flex items-center justify-center text-gray-400 hover:text-[#75FA03] transition">
+                            <i class="fab fa-medium text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-500">
+                <p>© 2025 GhostFi. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Back to Top Button -->
+    <button id="back-to-top" class="fixed bottom-8 right-8 w-12 h-12 bg-[#75FA03] rounded-full flex items-center justify-center text-black shadow-lg opacity-0 invisible transition-all duration-300">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        // Mobile Menu Toggle
+        document.getElementById('menu-toggle').addEventListener('click', function() {
+            const menu = document.getElementById('mobile-menu');
+            menu.classList.toggle('hidden');
+        });
+
+        // Back to Top Button
+        const backToTopButton = document.getElementById('back-to-top');
+        window.addEventListener('scroll', function() {
+            if (window.pageYOffset > 300) {
+                backToTopButton.classList.remove('opacity-0', 'invisible');
+                backToTopButton.classList.add('opacity-100', 'visible');
+            } else {
+                backToTopButton.classList.remove('opacity-100', 'visible');
+                backToTopButton.classList.add('opacity-0', 'invisible');
+            }
+        });
+
+        backToTopButton.addEventListener('click', function() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        // Simple particle effect
+        document.addEventListener('DOMContentLoaded', function() {
+            const container = document.getElementById('particles-js');
+            const particleCount = 30;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                // Random size between 2px and 5px
+                const size = Math.random() * 3 + 2;
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                
+                // Random position
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                
+                // Random animation
+                const duration = Math.random() * 20 + 10;
+                const delay = Math.random() * 5;
+                particle.style.animation = `float ${duration}s ease-in-out ${delay}s infinite`;
+                
+                container.appendChild(particle);
+            }
+            
+            // Add fade-in class to sections when they come into view
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('fade-in');
+                    }
+                });
+            }, { threshold: 0.1 });
+            
+            document.querySelectorAll('.section').forEach(section => {
+                observer.observe(section);
+            });
+        });
+    </script>
+</body>
+</html>
